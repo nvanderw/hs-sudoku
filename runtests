@@ -1,0 +1,2 @@
+#!/bin/bash
+find test -name "*.skb" | xargs -n 1 ./sudoku
