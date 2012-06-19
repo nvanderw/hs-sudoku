@@ -1,2 +1,4 @@
 #!/bin/bash
-time find test -name "*.skb" | xargs ./sudoku
+
+threads=8
+time find test -name "*.skb" | xargs ./sudoku +RTS "-N$threads" -RTS

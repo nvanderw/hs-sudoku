@@ -8,6 +8,7 @@ import System.IO
 import System.Exit
 
 import Control.Monad
+import Control.Parallel.Strategies
 
 {- |The internal state of the Sudoku puzzle is represented as an array mapping
  - (row, column) pairs to a Maybe Int from 1-9 or Nothing. The array is
@@ -83,7 +84,7 @@ main = do
         contents <- hGetContents infile
         return . loadSudoku $ contents
 
-    let solved = map solveSudoku puzzles
+    let solved = map solveSudoku puzzles `using` parTraversable rdeepseq
     let tagged = zip args solved
 
     sequence_ $ map (\(name, solution) ->
