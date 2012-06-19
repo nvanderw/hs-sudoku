@@ -1,8 +1,11 @@
 import Data.Array.IArray
+
 import Data.List
 import Data.Maybe
 import Data.Char
+
 import Control.Monad
+import Control.Arrow
 
 import System.Environment
 import System.IO
@@ -43,10 +46,11 @@ validEntries :: SudokuState -> (Int, Int) -> [Int]
 validEntries state (row, col) = validRow `intersect` validCol `intersect`
                                     validSquare
   where
-    validRow = arrayEntries \\ (catMaybes [state ! (row, c) | c <- arrayIndices])
-    validCol = arrayEntries \\ (catMaybes [state ! (r, col) | r <- arrayIndices])
+    validRow = arrayEntries \\ (catMaybes [state ! (row, c) | c <- arrayIndices, c /= col])
+    validCol = arrayEntries \\ (catMaybes [state ! (r, col) | r <- arrayIndices, r /= row])
     validSquare = let squareCoords = [(r, c) | r <- [3*(row `div` 3)..3*(row `div` 3) + 2],
-                                               c <- [3*(col `div` 3)..3*(col `div` 3) + 2]]
+                                               c <- [3*(col `div` 3)..3*(col `div` 3) + 2],
+                                               (r /= row) || (c /= col)]
                     in arrayEntries \\ (catMaybes . map (state !) $ squareCoords)
 
 {- |Attempts to solve the given Sudoku puzzle using a backtracking algorithm.
@@ -69,6 +73,13 @@ solveSudoku state = if null empties
     nextStates :: [SudokuState]
     nextStates = map (\valid -> state // [(target, Just valid)]) (validEntries state target)
 
+{- |Validates the given puzzle state by checking if there are any conflicts along
+ - a row, column, or in a 3x3 square -}
+validateSudoku :: SudokuState -> Bool
+validateSudoku state = and $
+    let fullEntries = map (second fromJust) . filter (isJust . snd) . assocs $ state
+      in map (\(coords, value) -> elem value . validEntries state $ coords) fullEntries
+
 main = do
     args <- getArgs
     if null args then do
@@ -80,6 +91,8 @@ main = do
     contents <- hGetContents infile
     let solution = solveSudoku . loadSudoku $ contents
     case solution of
-        Just state -> putStrLn . prettySudoku $ state
+        Just state -> if validateSudoku state
+                        then putStrLn . prettySudoku $ state
+                        else hPutStrLn stderr "Solution did not validate"
         Nothing -> putStrLn "No solution"
     exitWith ExitSuccess
