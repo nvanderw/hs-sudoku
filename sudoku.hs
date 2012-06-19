@@ -50,7 +50,10 @@ solveSudoku state = if null empties
  
     -- To do: make this smarter
     target :: (Int, Int)
-    target = head empties 
+    target = let score = length . valids
+               in minimumBy (\c1 c2 -> if score c1 < score c2 then LT
+                 else if score c1 > score c2 then GT
+                   else EQ) empties 
 
     -- Given a pair of coordinates referring to an empty box, yields which
     -- entries it may have based on what exists in its row, column, and 3x3
