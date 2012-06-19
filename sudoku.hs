@@ -13,16 +13,15 @@ import System.Exit
  - expected to be 9x9 -}
 type SudokuState = Array (Int, Int) (Maybe Int)
 
-validEntries :: [Int]
-validEntries = [1..9]
-validCoords = [0..8]
+arrayEntries = [1..9]
+arrayIndices = [0..8]
 
 -- |Loads a sudoku puzzle from text; this simply picks out the first 81
 -- digits in the given string and uses them to fill the array row-by-row
 loadSudoku :: String -> SudokuState
 loadSudoku str = array ((0,0), (8,8)) arrayAssocs
   where
-    coords = [(row, col) | row <- validCoords, col <- validCoords]
+    coords = [(row, col) | row <- arrayIndices, col <- arrayIndices]
     toMaybe digit = if digit == 0 then Nothing else Just digit
     rawInput = filter isDigit str
     arrayAssocs = zip coords $ map (toMaybe . read . return) $ rawInput
@@ -37,6 +36,19 @@ prettySudoku = intercalate "\n" . getLines . map toChar . elems
     getLines [] = []
     getLines str = (take 9 str):(getLines . drop 9 $ str)
 
+{- |Given a pair of coordinates referring to an empty box, yields which
+ - entries it may have based on what exists in its row, column, and 3x3
+ - square. -}
+validEntries :: SudokuState -> (Int, Int) -> [Int]
+validEntries state (row, col) = validRow `intersect` validCol `intersect`
+                                    validSquare
+  where
+    validRow = arrayEntries \\ (catMaybes [state ! (row, c) | c <- arrayIndices])
+    validCol = arrayEntries \\ (catMaybes [state ! (r, col) | r <- arrayIndices])
+    validSquare = let squareCoords = [(r, c) | r <- [3*(row `div` 3)..3*(row `div` 3) + 2],
+                                               c <- [3*(col `div` 3)..3*(col `div` 3) + 2]]
+                    in arrayEntries \\ (catMaybes . map (state !) $ squareCoords)
+
 {- |Attempts to solve the given Sudoku puzzle using a backtracking algorithm.
  - Yields a final SudokuState in a Just on success, or Nothing on failure. -}
 solveSudoku :: SudokuState -> Maybe SudokuState
@@ -48,26 +60,14 @@ solveSudoku state = if null empties
     empties :: [(Int, Int)]
     empties = map fst . filter (isNothing . snd) . assocs $ state
  
-    -- To do: make this smarter
+    -- Next box to fill in
     target :: (Int, Int)
     target = head empties 
-
-    -- Given a pair of coordinates referring to an empty box, yields which
-    -- entries it may have based on what exists in its row, column, and 3x3
-    -- square.
-    valids :: (Int, Int) -> [Int]
-    valids (row, col) = validRow `intersect` validCol `intersect` validSquare
-      where
-        validRow = validEntries \\ (catMaybes [state ! (row, c) | c <- validCoords])
-        validCol = validEntries \\ (catMaybes [state ! (r, col) | r <- validCoords])
-        validSquare = let squareCoords = [(r, c) | r <- [3*(row `div` 3)..3*(row `div` 3) + 2],
-                                                   c <- [3*(col `div` 3)..3*(col `div` 3) + 2]]
-                        in validEntries \\ (catMaybes . map (state !) $ squareCoords)
 
     -- A list of possible next states after filling in the target with each of
     -- its valid entries
     nextStates :: [SudokuState]
-    nextStates = map (\valid -> state // [(target, Just valid)]) (valids target)
+    nextStates = map (\valid -> state // [(target, Just valid)]) (validEntries state target)
 
 main = do
     args <- getArgs
