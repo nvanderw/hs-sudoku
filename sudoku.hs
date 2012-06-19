@@ -46,12 +46,19 @@ validEntries :: SudokuState -> (Int, Int) -> [Int]
 validEntries state (row, col) = validRow `intersect` validCol `intersect`
                                     validSquare
   where
-    validRow = arrayEntries \\ (catMaybes [state ! (row, c) | c <- arrayIndices, c /= col])
-    validCol = arrayEntries \\ (catMaybes [state ! (r, col) | r <- arrayIndices, r /= row])
-    validSquare = let squareCoords = [(r, c) | r <- [3*(row `div` 3)..3*(row `div` 3) + 2],
-                                               c <- [3*(col `div` 3)..3*(col `div` 3) + 2],
-                                               (r /= row) || (c /= col)]
-                    in arrayEntries \\ (catMaybes . map (state !) $ squareCoords)
+    -- Starting row/column for the 3x3 square in which (row, col) is contained
+    (square_row, square_col) = (3*(row `div` 3), 3*(col `div` 3))
+
+    validRow = arrayEntries \\ (catMaybes [state ! (row, c) |
+        c <- arrayIndices, c /= col])
+
+    validCol = arrayEntries \\ (catMaybes [state ! (r, col) |
+        r <- arrayIndices, r /= row])
+
+    validSquare = let square = [(r, c) | r <- [square_row..square_row + 2],
+                                         c <- [square_col..square_col + 2],
+                                         (r /= row) || (c /= col)]
+                    in arrayEntries \\ (catMaybes $ map (state !) square)
 
 {- |Attempts to solve the given Sudoku puzzle using a backtracking algorithm.
  - Yields a final SudokuState in a Just on success, or Nothing on failure. -}
@@ -71,14 +78,16 @@ solveSudoku state = if null empties
     -- A list of possible next states after filling in the target with each of
     -- its valid entries
     nextStates :: [SudokuState]
-    nextStates = map (\valid -> state // [(target, Just valid)]) (validEntries state target)
+    nextStates = map (\valid -> state // [(target, Just valid)])
+        (validEntries state target)
 
 {- |Validates the given puzzle state by checking if there are any conflicts along
  - a row, column, or in a 3x3 square -}
 validateSudoku :: SudokuState -> Bool
 validateSudoku state = and $
-    let fullEntries = map (second fromJust) . filter (isJust . snd) . assocs $ state
-      in map (\(coords, value) -> elem value . validEntries state $ coords) fullEntries
+    -- (coord, entry) pairs for boxes which are already full
+    let full = map (second fromJust) . filter (isJust . snd) . assocs $ state
+      in map (\(coords, value) -> elem value $ validEntries state coords) full
 
 main = do
     args <- getArgs
