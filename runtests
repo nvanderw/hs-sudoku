@@ -1,2 +1,2 @@
 #!/bin/bash
-time find test -name "*.skb" | xargs -n 1 ./sudoku
+time find test -name "*.skb" | xargs ./sudoku

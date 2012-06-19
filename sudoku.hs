@@ -2,11 +2,12 @@ import Data.Array.IArray
 import Data.List
 import Data.Maybe
 import Data.Char
-import Control.Monad
 
 import System.Environment
 import System.IO
 import System.Exit
+
+import Control.Monad
 
 {- |The internal state of the Sudoku puzzle is represented as an array mapping
  - (row, column) pairs to a Maybe Int from 1-9 or Nothing. The array is
@@ -70,16 +71,24 @@ solveSudoku state = if null empties
     nextStates = map (\valid -> state // [(target, Just valid)]) (valids target)
 
 main = do
+    -- Read in the arguments, which are expected to be puzzle files
     args <- getArgs
     if null args then do
-        hPutStrLn stderr "Error: you must specify a puzzle file"
+        hPutStrLn stderr "Error: you must specify at least one puzzle file"
         exitWith (ExitFailure 1)
         else return ()
-    let filename = head args
-    infile <- openFile filename ReadMode
-    contents <- hGetContents infile
-    let solution = solveSudoku . loadSudoku $ contents
-    case solution of
-        Just state -> putStrLn . prettySudoku $ state
-        Nothing -> putStrLn "No solution"
+
+    puzzles <- forM args $ \filename -> do
+        infile <- openFile filename ReadMode
+        contents <- hGetContents infile
+        return . loadSudoku $ contents
+
+    let solved = map solveSudoku puzzles
+    let tagged = zip args solved
+
+    sequence_ $ map (\(name, solution) ->
+        putStrLn name >> case solution of
+            Just state -> putStrLn . prettySudoku $ state
+            Nothing -> putStrLn "No solution") tagged
+
     exitWith ExitSuccess
