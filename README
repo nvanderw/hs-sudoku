@@ -1,0 +1,18 @@
+This sudoku solver takes a single command-line argument, specifying the name
+of a file with a sudoku puzzle in it. The first 9x9 = 81 digit characters of
+this puzzle file will be used to fill in the internal puzzle array row-by-row.
+So, a sensible human-and-machine-readable format might look like:
+
+000003017
+015009008
+060000000
+100007000
+009000200
+000500004
+000000020
+500600340
+340200000
+
+The zero digit denotes an empty square. Upon completion, the program will
+either print a message noting that there was no solution, or it will print
+out the solved puzzle in the above format.
