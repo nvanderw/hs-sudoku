@@ -1,3 +1,11 @@
+To build:
+
+$ cabal configure
+$ cabal build
+
+To run tests:
+$ ./runtests
+
 This sudoku solver takes a single command-line argument, specifying the name
 of a file with a sudoku puzzle in it. The first 9x9 = 81 digit characters of
 this puzzle file will be used to fill in the internal puzzle array row-by-row.
