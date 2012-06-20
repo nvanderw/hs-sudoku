@@ -1,4 +1,5 @@
 #!/bin/bash
 
 threads=8
-time find test -name "*.skb" | xargs ./sudoku +RTS "-N$threads" -RTS
+sudoku='dist/build/sudoku/sudoku'
+time find test -name "*.skb" | xargs $sudoku +RTS "-N$threads" -RTS
