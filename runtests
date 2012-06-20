@@ -1,2 +1,3 @@
 #!/bin/bash
-time find test -name "*.skb" | xargs -n 1 ./sudoku
+sudoku='dist/build/sudoku/sudoku'
+time find test -name "*.skb" | xargs -n 1 $sudoku
