@@ -1,3 +1,5 @@
+module Main (main) where
+
 import Data.Array.IArray
 
 import Data.List
