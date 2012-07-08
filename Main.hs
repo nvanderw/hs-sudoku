@@ -35,13 +35,24 @@ loadSudoku str = array ((0,0), (8,8)) arrayAssocs
 
 -- |Turns sudoku state into a nicely-formatted string for printing
 prettySudoku :: SudokuState -> String
-prettySudoku = intercalate "\n" . getLines . map toChar . elems
+prettySudoku = intercalate "\n" . pad . chunk 9 . map toChar . elems
   where
+    -- Maps each board entry (Maybe Int) to a character for display
     toChar (Just n) = head . show $ n
     toChar Nothing = '0'
 
-    getLines [] = []
-    getLines str = (take 9 str):(getLines . drop 9 $ str)
+    -- Breaks a list into sublists of fixed size
+    chunk :: Int -> [a] -> [[a]]
+    chunk _ [] = []
+    chunk n xs = (take n xs):chunk n (drop n xs)
+
+    -- Given n, x, and xs, inserts x after every nth entry in xs
+    insertEveryNth :: Int -> a -> [a] -> [a]
+    insertEveryNth n x = intercalate [x] . chunk n
+
+    -- Adds whitespace between blocks to the line list
+    pad :: [String] -> [String]
+    pad = insertEveryNth 3 "" . map (insertEveryNth 3 ' ')
 
 {- |Given a pair of coordinates referring to an empty box, yields which
  - entries it may have based on what exists in its row, column, and 3x3
