@@ -33,13 +33,14 @@ loadSudoku str = array ((0,0), (8,8)) arrayAssocs
 
 -- |Turns sudoku state into a nicely-formatted string for printing
 prettySudoku :: SudokuState -> String
-prettySudoku = intercalate "\n" . getLines . map toChar . elems
+prettySudoku = intercalate "\n" . chunk 9 . map toChar . elems
   where
     toChar (Just n) = head . show $ n
     toChar Nothing = '0'
 
-    getLines [] = []
-    getLines str = (take 9 str):(getLines . drop 9 $ str)
+    chunk :: Int -> [a] -> [[a]]
+    chunk _ [] = []
+    chunk n xs = (take n xs):chunk n (drop n xs)
 
 {- |Given a pair of coordinates referring to an empty box, yields which
  - entries it may have based on what exists in its row, column, and 3x3
