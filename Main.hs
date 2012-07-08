@@ -121,7 +121,7 @@ main = do
     let validated = map (fmap validateSudoku) solved `using` parTraversable rdeepseq
     let tagged = zip3 args solved validated
 
-    sequence_ $ map (\(name, solution, valid) ->
+    mapM_ (\(name, solution, valid) ->
         putStrLn name >> case solution of
             Just state -> if fromJust valid
                 then putStrLn . prettySudoku $ state
